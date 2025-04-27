@@ -20,7 +20,11 @@ import {
   PieChart,
   BarChart3,
   ListTodo,
+  Eye,
+  Trash2Icon,
+  Edit2,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 // Mock data for demonstration
 const mockTasks = [
@@ -109,7 +113,7 @@ const mockUsers = [
 ]
 
 export default function Dashboard() {
-  const [tasks, setTasks] = useState(mockTasks)
+  
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -124,6 +128,129 @@ export default function Dashboard() {
     status: "To Do",
     assignedTo: "",
   })
+  const [user, setUser] = useState(null) // Add this state
+  const navigate = useNavigate()
+
+
+  const [tasks, setTasks] = useState([]); // Start with empty array instead of mockTasks
+
+  // Add this useEffect hook to fetch tasks when user data is available
+  useEffect(() => {
+    const fetchMyTasks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/');
+          return;
+        }
+  
+        const response = await fetch('http://localhost:5000/api/tasks/mytasks', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to fetch tasks');
+        }
+  
+        const data = await response.json();
+        console.log("My created tasks:", data.data);
+        // Set tasks to state or use them as needed
+        setTasks(data.data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+  
+    fetchMyTasks();
+  }, [navigate]);
+
+
+
+
+
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          navigate('/') // Redirect to login if no token
+          return
+        }
+
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data')
+        }
+
+        const data = await response.json()
+        console.log("user ====" , data.data);
+        
+        setUser(data.data) // Set user data in state
+      } catch (error) {
+        console.error('Error fetching user:', error)
+        navigate('/') // Redirect to login on error
+      }
+    }
+
+    fetchUserData()
+  }, [navigate])
+
+
+
+
+
+  const handleAddTask = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/'); // Redirect to login if no token
+        return;
+      }
+  
+      // Create task with the logged-in user as creator
+      const taskData = {
+        ...newTask,
+        assignedTo: newTask.assignedTo || user.id, // Use selected user or current user
+        createdBy: user._id
+      };
+  
+      const response = await fetch('http://localhost:5000/api/tasks/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(taskData)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to create task');
+      }
+  
+      const createdTask = await response.json();
+      
+      // Update local state with the new task
+      setTasks([createdTask.data, ...tasks]);
+      setNewTask({ title: "", description: "", status: "To Do", assignedTo: "" });
+      setIsAddTaskOpen(false);
+      
+    } catch (error) {
+      console.error('Error creating task:', error);
+      // You might want to show an error message to the user here
+    }
+  };
+
 
   // Handle window resize for responsive design
   useEffect(() => {
@@ -142,19 +269,7 @@ export default function Dashboard() {
   // Filter tasks based on status
   const filteredTasks = filterStatus === "All" ? tasks : tasks.filter((task) => task.status === filterStatus)
 
-  const handleAddTask = (e) => {
-    e.preventDefault()
-    const task = {
-      _id: Date.now().toString(),
-      ...newTask,
-      assignedTo: mockUsers.find((user) => user._id === newTask.assignedTo) || null,
-      createdBy: { _id: "101", name: "John Doe" },
-      createdAt: new Date(),
-    }
-    setTasks([task, ...tasks])
-    setNewTask({ title: "", description: "", status: "To Do", assignedTo: "" })
-    setIsAddTaskOpen(false)
-  }
+
 
   const handleEditTask = (e) => {
     e.preventDefault()
@@ -209,6 +324,27 @@ export default function Dashboard() {
         return "bg-gray-500"
     }
   }
+
+
+    // Delete task handler
+    const handleDelete = async (taskId) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/tasks/delete/${taskId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+  
+        if (!response.ok) throw new Error('Failed to delete task');
+  
+        // Remove the task from state
+        setTasks(tasks.filter(task => task._id !== taskId));
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    };
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed)
@@ -512,21 +648,17 @@ export default function Dashboard() {
               />
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <button className="relative p-1 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            <div className="relative">
-              <button className="flex items-center text-sm focus:outline-none">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-                  JD
-                </div>
-                <span className="hidden ml-2 text-gray-700 md:block">John Doe</span>
-                <ChevronRight className="hidden w-4 h-4 ml-1 text-gray-500 md:block" />
-              </button>
-            </div>
-          </div>
+          <div className="relative">
+  <button className="flex items-center text-sm focus:outline-none">
+    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+      {user?.name?.charAt(0) || "U"} {/* Show first letter of name */}
+    </div>
+    <span className="hidden ml-2 text-gray-700 md:block">
+      {user?.name || "User"} {/* Show full name */}
+    </span>
+    <ChevronRight className="hidden w-4 h-4 ml-1 text-gray-500 md:block" />
+  </button>
+</div>
         </header>
 
         {/* Main Content Area */}
@@ -678,67 +810,65 @@ export default function Dashboard() {
             </div>
 
             {/* Task List */}
-            <div className="mt-4 bg-white shadow-sm rounded-xl border border-gray-100">
-              <ul className="divide-y divide-gray-200">
-                {filteredTasks.length > 0 ? (
-                  filteredTasks.map((task) => (
-                    <li key={task._id} className="px-6 py-5 hover:bg-gray-50 transition-colors">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center">
-                            <div className={`w-3 h-3 rounded-full mr-3 ${getStatusBgColor(task.status)}`}></div>
-                            <h2 className="text-lg font-semibold text-gray-900 truncate">{task.title}</h2>
-                            <span
-                              className={`ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}
-                            >
-                              {task.status}
-                            </span>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-600">{task.description}</div>
-                          <div className="mt-2 flex items-center text-xs text-gray-500">
-                            <div className="flex items-center">
-                              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
-                                {task.assignedTo?.name?.charAt(0) || "?"}
-                              </div>
-                              <span className="ml-1.5">{task.assignedTo?.name || "Unassigned"}</span>
-                            </div>
-                            <span className="mx-2">•</span>
-                            <span>Created {new Date(task.createdAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center mt-4 sm:mt-0 space-x-2">
-                          <select
-                            value={task.status}
-                            onChange={(e) => updateTaskStatus(task._id, e.target.value)}
-                            className="block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-lg"
-                          >
-                            <option value="To Do">To Do</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Done">Done</option>
-                          </select>
-                          <button
-                            onClick={() => openEditModal(task)}
-                            className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(task)}
-                            className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
+      {/* Task List */}
+      <div className="mt-4 bg-white shadow-sm rounded-xl border border-gray-100">
+      <ul className="divide-y divide-gray-200">
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <li key={task._id} className="px-6 py-5 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center">
+                    <h2 className="text-lg font-semibold text-gray-900 truncate">{task.title}</h2>
+                    <span className={`ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                      {task.status}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">{task.description}</div>
+                  <div className="mt-2 flex items-center text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
+                        {task.assignedTo?.name?.charAt(0) || "?"}
                       </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="px-6 py-10 text-center">
-                    <p className="text-gray-500">No tasks found. Add a new task to get started!</p>
-                  </li>
-                )}
-              </ul>
-            </div>
+                      <span className="ml-1.5">{task.assignedTo?.name || "Unassigned"}</span>
+                    </div>
+                    <span className="mx-2">•</span>
+                    <span>Created {new Date(task.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="ml-4 flex items-center space-x-2">
+                  <button
+                    onClick={() => handleViewDetails(task._id)}
+                    className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                    title="View Details"
+                  >
+                    <Eye className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleEdit(task._id)}
+                    className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                    title="Edit Task"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(task._id)}
+                    className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-red-600 transition-colors"
+                    title="Delete Task"
+                  >
+                    <Trash2Icon className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))
+        ) : (
+          <li className="px-6 py-10 text-center">
+            <p className="text-gray-500">No tasks found</p>
+          </li>
+        )}
+      </ul>
+    </div>
           </div>
         </main>
       </div>
@@ -808,23 +938,23 @@ export default function Dashboard() {
                         </select>
                       </div>
                       <div className="mb-4">
-                        <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
-                          Assign To
-                        </label>
-                        <select
-                          id="assignedTo"
-                          value={newTask.assignedTo}
-                          onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
-                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-lg"
-                        >
-                          <option value="">Select User</option>
-                          {mockUsers.map((user) => (
-                            <option key={user._id} value={user._id}>
-                              {user.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+  <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
+    Assign To
+  </label>
+  <select
+    id="assignedTo"
+    value={newTask.assignedTo}
+    onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
+    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-lg"
+  >
+    <option value={user?._id}>Me ({user?.name})</option>
+    {mockUsers.filter(u => u._id !== user?._id).map((user) => (
+      <option key={user._id} value={user._id}>
+        {user.name}
+      </option>
+    ))}
+  </select>
+</div>
                       <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                         <button
                           type="submit"

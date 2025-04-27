@@ -7,7 +7,7 @@ export default function LoginSignupPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
-    username: '',
+    name: '', // Changed from username
     email: '',
     password: ''
   })
@@ -70,10 +70,14 @@ export default function LoginSignupPage() {
         ? 'http://localhost:5000/api/auth/login' 
         : 'http://localhost:5000/api/auth/register'
       
-      const payload = isLogin
-        ? { email: formData.email, password: formData.password }
-        : { username: formData.username, email: formData.email, password: formData.password }
-      
+// Change this part in handleSubmit function
+const payload = isLogin
+  ? { email: formData.email, password: formData.password }
+  : { 
+      name: formData.username, // Changed from username to name
+      email: formData.email, 
+      password: formData.password 
+    }
       const response = await fetch(url, {
         method: 'POST',
         headers: {
