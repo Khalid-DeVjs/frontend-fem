@@ -834,20 +834,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="ml-4 flex items-center space-x-2">
-                  <button
-                    onClick={() => handleViewDetails(task._id)}
-                    className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                    title="View Details"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(task._id)}
-                    className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                    title="Edit Task"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                  </button>
+                 
+                 
                   <button
                     onClick={() => handleDelete(task._id)}
                     className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-red-600 transition-colors"
