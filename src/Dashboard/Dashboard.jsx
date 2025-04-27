@@ -144,7 +144,7 @@ export default function Dashboard() {
           return;
         }
   
-        const response = await fetch('http://localhost:5000/api/tasks/mytasks', {
+        const response = await fetch('https://backendfem.vercel.app/api/tasks/mytasks', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -178,7 +178,7 @@ export default function Dashboard() {
         const token = localStorage.getItem('token')
 
 
-        const response = await fetch('http://localhost:5000/api/auth/me', {
+        const response = await fetch('https://backendfem.vercel.app/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -222,7 +222,7 @@ export default function Dashboard() {
         createdBy: user._id
       };
   
-      const response = await fetch('http://localhost:5000/api/tasks/create', {
+      const response = await fetch('https://backendfem.vercel.app/api/tasks/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -327,7 +327,7 @@ export default function Dashboard() {
     const handleDelete = async (taskId) => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/tasks/delete/${taskId}`, {
+        const response = await fetch(`https://backendfem.vercel.app/api/tasks/delete/${taskId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

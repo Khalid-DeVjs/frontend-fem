@@ -67,8 +67,8 @@ export default function LoginSignupPage() {
     
     try {
       const url = isLogin 
-        ? 'http://localhost:5000/api/auth/login' 
-        : 'http://localhost:5000/api/auth/register'
+        ? 'https://backendfem.vercel.app/api/auth/login' 
+        : 'https://backendfem.vercel.app/api/auth/register'
       
 // Change this part in handleSubmit function
 const payload = isLogin
