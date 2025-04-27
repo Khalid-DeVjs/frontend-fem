@@ -176,10 +176,7 @@ export default function Dashboard() {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token')
-        if (!token) {
-          navigate('/') // Redirect to login if no token
-          return
-        }
+
 
         const response = await fetch('http://localhost:5000/api/auth/me', {
           headers: {
